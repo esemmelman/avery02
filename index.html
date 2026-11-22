@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hebrew Vowel Recorder</title>
 <link rel="stylesheet" href="web/style.css">
-<script type="module" src="web/app.js"></script>
+<script type="module" src="web/app.js?v=3"></script>
 </head>
 <body>
 <main>
@@ -16,14 +16,7 @@
   </aside>
   <section aria-labelledby="title">
     <p class="heading">Hebrew vowel recorder</p>
-    <form class="card" id="unlock" hidden>
-      <h1>Unlock recordings</h1>
-      <label for="access-code">Recorder access code</label>
-      <input id="access-code" type="password" required autocomplete="current-password">
-      <button type="submit">Unlock</button>
-      <p id="unlock-status" role="status"></p>
-    </form>
-    <div class="card" id="recorder-card">
+    <div class="card">
       <div id="symbol" class="symbol" lang="he" dir="rtl"></div>
       <h1 id="title"></h1>
       <p id="instruction">Tap a vowel to play its recording or record a new sound.</p>
@@ -34,7 +27,6 @@
       <audio id="player" controls hidden></audio>
       <p id="status" role="status" aria-live="polite"></p>
     </div>
-    <button type="button" id="lock" hidden>Lock recorder</button>
   </section>
 </main>
 </body>

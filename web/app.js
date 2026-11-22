@@ -1,17 +1,19 @@
 import { vowels } from "./vowels.js";
 
+const pageUrl = new URL(location.href);
+if (pageUrl.searchParams.has("from-retired")) {
+  pageUrl.searchParams.delete("from-retired");
+  history.replaceState(null, "", pageUrl);
+}
+
 const byId = (id) => document.getElementById(id);
 const nav = byId("vowels");
 const record = byId("record");
 const save = byId("save");
 const player = byId("player");
 const status = byId("status");
-const unlock = byId("unlock");
-const lock = byId("lock");
-const unlockStatus = byId("unlock-status");
 const endpoint = "https://fgomaujsdblpzxhnnqrg.supabase.co/functions/v1/avery02-pages";
 const drafts = new Map();
-let accessCode = sessionStorage.getItem("avery02-access-code") || "";
 let clips = new Map();
 let saved = new Set();
 let selected = vowels[0][0];
@@ -52,17 +54,14 @@ for (const [id, name, symbol] of vowels) {
 }
 
 function render() {
-  unlock.hidden = ready;
-  lock.hidden = !ready;
-  lock.disabled = busy || !!recorder || drafts.size > 0;
-  byId("recorder-card").hidden = !ready;
   const [, name, symbol] = vowels.find(([id]) => id === selected);
   byId("title").textContent = name;
   byId("symbol").textContent = symbol;
-  byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved` : "Recorder locked";
+  byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved`
+    : busy ? "Loading recordings…" : "Sync unavailable";
   for (const button of nav.children) {
     const id = button.dataset.vowel;
-    button.disabled = !ready || busy || !!recorder;
+    button.disabled = busy || !!recorder;
     button.setAttribute("aria-pressed", String(id === selected));
     button.lastElementChild.textContent = saved.has(id) ? "✓" : "";
     const [, label] = vowels.find(([vowelId]) => vowelId === id);
@@ -95,17 +94,16 @@ function render() {
 function audioRequest(id, options = {}) {
   const url = new URL(endpoint);
   if (id) url.searchParams.set("vowel", id);
-  return fetch(url, { ...options, headers: { Authorization: `Bearer ${accessCode}` } });
+  return fetch(url, options);
 }
 
 async function refresh() {
   const response = await audioRequest();
-  if (response.status === 401 || response.status === 403) throw new Error("Access code rejected.");
-  if (!response.ok) throw new Error("Could not connect. Try again.");
+  if (!response.ok) throw new Error("Could not connect to recordings.");
   const ids = await response.json();
   const recordings = await Promise.all(ids.map(async (id) => {
     const audio = await audioRequest(id);
-    if (!audio.ok) throw new Error("Could not load recordings. Try again.");
+    if (!audio.ok) throw new Error("Could not load recordings.");
     return [id, await audio.blob()];
   }));
   clips = new Map(recordings);
@@ -194,41 +192,8 @@ window.addEventListener("beforeunload", (event) => {
   event.preventDefault();
   event.returnValue = true;
 });
-async function connect() {
-  busy = true;
-  unlock.querySelector("button").disabled = true;
-  unlockStatus.textContent = "Unlocking…";
-  render();
-  try {
-    await refresh();
-    sessionStorage.setItem("avery02-access-code", accessCode);
-    byId("access-code").value = "";
-    unlockStatus.textContent = "";
-  } catch (error) {
-    unlockStatus.textContent = error.message;
-  } finally {
-    busy = false;
-    unlock.querySelector("button").disabled = false;
-    render();
-  }
-}
-
-unlock.addEventListener("submit", (event) => {
-  event.preventDefault();
-  accessCode = byId("access-code").value.trim();
-  void connect();
-});
-lock.addEventListener("click", () => {
-  accessCode = "";
-  sessionStorage.removeItem("avery02-access-code");
-  clips.clear();
-  saved.clear();
-  ready = false;
-  render();
-  byId("access-code").focus();
-});
 document.addEventListener("visibilitychange", async () => {
-  if (document.hidden || !ready || busy || recorder) return;
+  if (document.hidden || busy || recorder) return;
   busy = true;
   try {
     await refresh();
@@ -238,5 +203,13 @@ document.addEventListener("visibilitychange", async () => {
     render();
   }
 });
+busy = true;
 render();
-if (accessCode) void connect();
+try {
+  await refresh();
+} catch {
+  status.textContent = "Could not load saved recordings. Reload to try again.";
+} finally {
+  busy = false;
+  render();
+}

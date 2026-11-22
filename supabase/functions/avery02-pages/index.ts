@@ -1,7 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
-
 const origin = "https://esemmelman.github.io";
-const tokenHash = "__ACCESS_CODE_SHA256__";
 const bucket = "avery02-vowel-recordings";
 const prefix = "avery02";
 const storage = Deno.env.get("SUPABASE_URL") + "/storage/v1";
@@ -11,7 +8,7 @@ const vowels = new Set(["patah", "qamatz", "segol", "tsere", "hiriq", "holam", "
   "sheva", "hataf-segol", "hataf-patah", "hataf-qamatz", "qamatz-qatan"]);
 const cors = {
   "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "content-type",
   "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
   "Cache-Control": "private, no-store",
   Vary: "Origin",
@@ -20,14 +17,8 @@ const cors = {
 Deno.serve(async (request) => {
   const reply = (status: number) => new Response(null, { status, headers: cors });
   const caller = request.headers.get("Origin");
-  if (caller && caller !== origin) return reply(403);
+  if (caller !== origin) return reply(403);
   if (request.method === "OPTIONS") return reply(204);
-
-  const token = request.headers.get("Authorization")?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
-  if (!token) return reply(401);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-  const expected = Uint8Array.from(tokenHash.match(/../g)!, (pair) => parseInt(pair, 16));
-  if (!timingSafeEqual(new Uint8Array(digest), expected)) return reply(401);
 
   const query = new URL(request.url).searchParams;
   const vowel = query.get("vowel");
@@ -60,12 +51,9 @@ Deno.serve(async (request) => {
     const body = await request.arrayBuffer();
     if (!body.byteLength || body.byteLength > 8 * 1024 * 1024) return reply(413);
     headers.set("Content-Type", type);
-    const copy = query.get("copy") === "1";
-    headers.set("x-upsert", copy ? "false" : "true");
+    headers.set("x-upsert", "true");
     const response = await fetch(`${storage}/object/${path}`, { method: "POST", headers, body });
     if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      if (copy && (response.status === 409 || Number(error?.statusCode) === 409)) return reply(409);
       return reply(502);
     }
     await response.body?.cancel();
