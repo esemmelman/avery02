@@ -9,6 +9,7 @@ if (pageUrl.searchParams.has("from-retired")) {
 const byId = (id) => document.getElementById(id);
 const nav = byId("vowels");
 const pair = byId("pair");
+const pairText = byId("pair-text");
 const startOver = byId("start-over");
 const previous = byId("previous");
 const next = byId("next");
@@ -27,6 +28,12 @@ let busy = false;
 let timer;
 let previewUrl;
 let previewBlob;
+let highlighted;
+
+function clearHighlight() {
+  highlighted?.removeAttribute("data-playing");
+  highlighted = undefined;
+}
 
 function selectedClip() {
   return selectedVowel ?? `pair-${String(pairIndex + 1).padStart(2, "0")}`;
@@ -79,12 +86,22 @@ for (const [id, symbol] of vowels) {
   nav.append(input, label);
 }
 
+player.addEventListener("playing", () => {
+  if (player.paused || player.ended || !previewUrl) return;
+  clearHighlight();
+  highlighted = selectedVowel ? vowelOptions.get(selectedVowel) : pairText;
+  highlighted.setAttribute("data-playing", "");
+});
+for (const event of ["pause", "ended", "waiting", "error", "emptied"]) {
+  player.addEventListener(event, clearHighlight);
+}
+
 function render() {
   const id = selectedClip();
   const symbol = byId("symbol");
   symbol.hidden = !selectedVowel;
   symbol.textContent = vowels.find(([vowel]) => vowel === selectedVowel)?.[1] ?? "";
-  pair.textContent = pairs[pairIndex];
+  pairText.textContent = pairs[pairIndex];
   byId("pair-position").textContent = `Pair ${pairIndex + 1} of ${pairs.length}`;
   pair.disabled = busy || !!recorder;
   startOver.disabled = pair.disabled;
@@ -113,6 +130,7 @@ function render() {
   }
   const source = previewUrl || null;
   if (player.getAttribute("src") === source) return;
+  clearHighlight();
   player.pause();
   if (source) {
     player.src = source;

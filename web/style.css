@@ -69,6 +69,13 @@ button:disabled { opacity: .57; cursor: wait; }
   word-spacing: -.1em;
 }
 #pair:disabled { opacity: 1; }
+#pair-text { padding-inline: .05em; border-radius: .14em; }
+#pair-text[data-playing],
+#vowels input[data-playing] + label {
+  color: #10594e;
+  background: #d8f3d8;
+}
+#vowels input[data-playing] + label { border-radius: 8px; }
 .pair-navigation {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
