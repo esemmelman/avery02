@@ -11,7 +11,6 @@ export const vowels = [
   ["hataf-segol", "אֱ"],
   ["hataf-patah", "אֲ"],
   ["hataf-qamatz", "אֳ"],
-  ["qamatz-qatan", "אׇ"],
 ];
 
 export const pairs = [

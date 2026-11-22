@@ -1,4 +1,4 @@
-import { pairs, vowels } from "./vowels.js?v=6";
+import { pairs, vowels } from "./vowels.js?v=7";
 
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has("from-retired")) {
@@ -12,18 +12,17 @@ const pair = byId("pair");
 const previous = byId("previous");
 const next = byId("next");
 const record = byId("record");
+const recordVowel = byId("record-vowel");
 const save = byId("save");
 const player = byId("player");
 const status = byId("status");
 const endpoint = "https://fgomaujsdblpzxhnnqrg.supabase.co/functions/v1/avery02-pages";
 const drafts = new Map();
 let clips = new Map();
-let saved = new Set();
 let pairIndex = 0;
 let selectedVowel;
 let recorder;
 let busy = false;
-let ready = false;
 let timer;
 let previewUrl;
 let previewBlob;
@@ -87,18 +86,19 @@ function render() {
   pair.disabled = busy || !!recorder;
   previous.disabled = pair.disabled || pairIndex === 0;
   next.disabled = pair.disabled || pairIndex === pairs.length - 1;
-  const savedVowels = vowels.filter(([vowel]) => saved.has(vowel)).length;
-  byId("progress").textContent = ready ? `${savedVowels} of ${vowels.length} saved`
-    : busy ? "Loading recordings…" : "Sync unavailable";
   for (const [id, { input, label }] of vowelOptions) {
     input.disabled = busy || !!recorder;
     input.checked = id === selectedVowel;
-    label.toggleAttribute("data-saved", saved.has(id));
+    label.toggleAttribute("data-saved", clips.has(id));
   }
   record.disabled = busy;
-  record.toggleAttribute("data-recording", !!recorder);
-  const target = selectedVowel ? "vowel" : "pair";
-  record.textContent = recorder ? "Stop recording" : saved.has(id) ? `Re-record ${target}` : `Record ${target}`;
+  record.hidden = !!recorder && !!selectedVowel;
+  record.toggleAttribute("data-recording", !!recorder && !selectedVowel);
+  record.textContent = recorder && !selectedVowel ? "Stop recording" : "Record pair";
+  recordVowel.disabled = busy;
+  recordVowel.hidden = !!recorder && !selectedVowel;
+  recordVowel.toggleAttribute("data-recording", !!recorder && !!selectedVowel);
+  recordVowel.textContent = recorder && selectedVowel ? "Stop recording" : "Record vowel";
   save.hidden = !drafts.has(id) || !!recorder;
   save.disabled = busy;
   if (recorder) return;
@@ -130,15 +130,13 @@ function audioRequest(id, options = {}) {
 async function refresh() {
   const response = await audioRequest();
   if (!response.ok) throw new Error("Could not connect to recordings.");
-  const ids = await response.json();
+  const ids = (await response.json()).filter((id) => id !== "qamatz-qatan");
   const recordings = await Promise.all(ids.map(async (id) => {
     const audio = await audioRequest(id);
     if (!audio.ok) throw new Error("Could not load recordings.");
     return [id, await audio.blob()];
   }));
   clips = new Map(recordings);
-  saved = new Set(ids);
-  ready = true;
 }
 
 save.addEventListener("click", async () => {
@@ -153,8 +151,6 @@ save.addEventListener("click", async () => {
     if (!response.ok) throw new Error("Upload failed");
     drafts.delete(id);
     clips.set(id, draft);
-    saved.add(id);
-    ready = true;
     status.textContent = "Saved. Available on your other devices.";
   } catch {
     status.textContent = "Could not save. Your clip is still here. Tap Save recording to retry.";
@@ -164,11 +160,16 @@ save.addEventListener("click", async () => {
   }
 });
 
-record.addEventListener("click", async () => {
+async function toggleRecording(forVowel) {
   if (recorder) {
     if (recorder.state !== "inactive") recorder.stop();
     return;
   }
+  if (forVowel && !selectedVowel) {
+    status.textContent = "Tap a vowel in the left panel, then choose Record vowel.";
+    return;
+  }
+  if (!forVowel) selectedVowel = undefined;
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
     status.textContent = "Open the secure recorder link in Safari or another browser with microphone access.";
     return;
@@ -215,7 +216,10 @@ record.addEventListener("click", async () => {
     busy = false;
     render();
   }
-});
+}
+
+record.addEventListener("click", () => toggleRecording(false));
+recordVowel.addEventListener("click", () => toggleRecording(true));
 
 window.addEventListener("beforeunload", (event) => {
   if (!drafts.size && !recorder) return;

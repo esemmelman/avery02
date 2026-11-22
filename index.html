@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hebrew Vowel Recorder</title>
-<link rel="stylesheet" href="web/style.css?v=6">
-<script type="module" src="web/app.js?v=6"></script>
+<link rel="stylesheet" href="web/style.css?v=7">
+<script type="module" src="web/app.js?v=7"></script>
 </head>
 <body>
 <main>
   <aside aria-label="Hebrew vowels">
     <div id="vowels" role="radiogroup" aria-label="Choose a vowel"></div>
-    <p id="progress">Loading recordings…</p>
   </aside>
   <section class="lesson" aria-labelledby="practice-title">
     <h1 id="practice-title">Letter and vowel practice</h1>
@@ -27,6 +26,7 @@
       <div id="actions">
         <span id="symbol" class="symbol" lang="he" dir="rtl" hidden></span>
         <button id="record" disabled>Record pair</button>
+        <button id="record-vowel" disabled>Record vowel</button>
         <button id="save" hidden>Save recording</button>
       </div>
       <audio id="player" controls hidden></audio>

@@ -31,7 +31,6 @@ aside {
   overflow: auto;
   padding: 14px;
 }
-#progress { margin: 8px 0 0; text-align: center; font-size: .875rem; }
 #vowels { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 #vowels input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 #vowels label {
@@ -84,7 +83,7 @@ h1 { margin: 4px 0 12px; font-size: clamp(1.35rem, 3vw, 1.9rem); }
 .symbol { font: 3rem/1 var(--hebrew-font); color: #155b50; min-width: 1em; }
 #actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
 #actions button { background: #10594e; color: white; border: 0; border-radius: 10px; padding: 10px 18px; font-weight: 650; }
-#record[data-recording] { background: #9d302d; }
+#actions [data-recording] { background: #9d302d; }
 audio { display: block; margin: 18px auto 0; width: min(100%, 320px); }
 #status { min-height: 1.25em; margin-bottom: 0; }
 @media (max-width: 620px) {
