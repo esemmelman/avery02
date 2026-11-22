@@ -1,4 +1,4 @@
-import { vowels } from "./vowels.js?v=5";
+import { pairs, vowels } from "./vowels.js?v=6";
 
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has("from-retired")) {
@@ -8,6 +8,9 @@ if (pageUrl.searchParams.has("from-retired")) {
 
 const byId = (id) => document.getElementById(id);
 const nav = byId("vowels");
+const pair = byId("pair");
+const previous = byId("previous");
+const next = byId("next");
 const record = byId("record");
 const save = byId("save");
 const player = byId("player");
@@ -16,13 +19,42 @@ const endpoint = "https://fgomaujsdblpzxhnnqrg.supabase.co/functions/v1/avery02-
 const drafts = new Map();
 let clips = new Map();
 let saved = new Set();
-let selected = vowels[0][0];
+let pairIndex = 0;
+let selectedVowel;
 let recorder;
 let busy = false;
 let ready = false;
 let timer;
 let previewUrl;
 let previewBlob;
+
+function selectedClip() {
+  return selectedVowel ?? `pair-${String(pairIndex + 1).padStart(2, "0")}`;
+}
+
+function playSelected() {
+  if (player.hidden) return;
+  player.currentTime = 0;
+  const source = player.src;
+  player.play().catch((error) => {
+    if (error.name !== "AbortError" && player.src === source) {
+      status.textContent = "Playback failed. Tap the pair or vowel again, or use the audio controls.";
+    }
+  });
+}
+
+function showPair(index) {
+  pairIndex = index;
+  selectedVowel = undefined;
+  status.textContent = "";
+  render();
+  if (player.hidden) status.textContent = "Record this pair to add its sound.";
+  else playSelected();
+}
+
+pair.addEventListener("click", () => showPair(pairIndex));
+previous.addEventListener("click", () => showPair(pairIndex - 1));
+next.addEventListener("click", () => showPair(pairIndex + 1));
 
 const vowelOptions = new Map();
 for (const [id, symbol] of vowels) {
@@ -36,39 +68,41 @@ for (const [id, symbol] of vowels) {
   label.dir = "rtl";
   label.textContent = symbol;
   input.addEventListener("click", () => {
-    selected = id;
+    selectedVowel = id;
     status.textContent = "";
     render();
-    if (player.hidden) return;
-    player.currentTime = 0;
-    const source = player.src;
-    player.play().catch((error) => {
-      if (error.name !== "AbortError" && player.src === source) {
-        status.textContent = "Playback failed. Try tapping the vowel again or use the audio controls.";
-      }
-    });
+    playSelected();
   });
   vowelOptions.set(id, { input, label });
   nav.append(input, label);
 }
 
 function render() {
-  const [, symbol] = vowels.find(([id]) => id === selected);
-  byId("symbol").textContent = symbol;
-  byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved`
+  const id = selectedClip();
+  const symbol = byId("symbol");
+  symbol.hidden = !selectedVowel;
+  symbol.textContent = vowels.find(([vowel]) => vowel === selectedVowel)?.[1] ?? "";
+  pair.textContent = pairs[pairIndex];
+  byId("pair-position").textContent = `Pair ${pairIndex + 1} of ${pairs.length}`;
+  pair.disabled = busy || !!recorder;
+  previous.disabled = pair.disabled || pairIndex === 0;
+  next.disabled = pair.disabled || pairIndex === pairs.length - 1;
+  const savedVowels = vowels.filter(([vowel]) => saved.has(vowel)).length;
+  byId("progress").textContent = ready ? `${savedVowels} of ${vowels.length} saved`
     : busy ? "Loading recordings…" : "Sync unavailable";
   for (const [id, { input, label }] of vowelOptions) {
     input.disabled = busy || !!recorder;
-    input.checked = id === selected;
+    input.checked = id === selectedVowel;
     label.toggleAttribute("data-saved", saved.has(id));
   }
   record.disabled = busy;
   record.toggleAttribute("data-recording", !!recorder);
-  record.textContent = recorder ? "Stop recording" : saved.has(selected) ? "Record again" : "Record sound";
-  save.hidden = !drafts.has(selected) || !!recorder;
+  const target = selectedVowel ? "vowel" : "pair";
+  record.textContent = recorder ? "Stop recording" : saved.has(id) ? `Re-record ${target}` : `Record ${target}`;
+  save.hidden = !drafts.has(id) || !!recorder;
   save.disabled = busy;
   if (recorder) return;
-  const draft = drafts.get(selected) || clips.get(selected);
+  const draft = drafts.get(id) || clips.get(id);
   if (draft !== previewBlob) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewBlob = draft;
@@ -88,7 +122,8 @@ function render() {
 
 function audioRequest(id, options = {}) {
   const url = new URL(endpoint);
-  if (id) url.searchParams.set("vowel", id);
+  if (id) url.searchParams.set("clip", id);
+  else url.searchParams.set("scope", "all");
   return fetch(url, options);
 }
 
@@ -107,7 +142,7 @@ async function refresh() {
 }
 
 save.addEventListener("click", async () => {
-  const id = selected;
+  const id = selectedClip();
   const draft = drafts.get(id);
   if (!draft) return;
   busy = true;
@@ -140,7 +175,7 @@ record.addEventListener("click", async () => {
   }
   busy = true;
   render();
-  const id = selected;
+  const id = selectedClip();
   let stream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });

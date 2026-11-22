@@ -6,6 +6,7 @@ const role = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const types = new Set(["audio/mp4", "audio/m4a", "audio/webm", "audio/ogg"]);
 const vowels = new Set(["patah", "qamatz", "segol", "tsere", "hiriq", "holam", "qubuts", "shuruk",
   "sheva", "hataf-segol", "hataf-patah", "hataf-qamatz", "qamatz-qatan"]);
+const pairId = /^pair-(?:0[1-9]|1[0-9]|2[0-5])$/;
 const cors = {
   "Access-Control-Allow-Origin": origin,
   "Access-Control-Allow-Headers": "content-type",
@@ -21,25 +22,30 @@ Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return reply(204);
 
   const query = new URL(request.url).searchParams;
-  const vowel = query.get("vowel");
+  const clip = query.get("clip") ?? query.get("vowel");
   const headers = new Headers({ Authorization: `Bearer ${role}` });
 
-  if (!vowel && request.method === "GET") {
+  if (!clip && request.method === "GET") {
     headers.set("Content-Type", "application/json");
     const response = await fetch(`${storage}/object/list/${bucket}`, {
       method: "POST", headers, body: JSON.stringify({ prefix, limit: 100 }),
     });
     if (!response.ok) return reply(502);
     const objects: { name: string; id: string | null }[] = await response.json();
-    return Response.json(objects.filter(({ id, name }) => id && vowels.has(name))
+    const includePairs = query.get("scope") === "all";
+    return Response.json(objects.filter(({ id, name }) => id &&
+      (vowels.has(name) || (includePairs && pairId.test(name))))
       .map(({ name }) => name), { headers: cors });
   }
 
-  if (!vowel || !vowels.has(vowel)) return reply(404);
-  const path = `${bucket}/${prefix}/${vowel}`;
+  if (!clip || !(vowels.has(clip) || pairId.test(clip))) return reply(404);
+  const path = `${bucket}/${prefix}/${clip}`;
   if (request.method === "GET") {
     const response = await fetch(`${storage}/object/authenticated/${path}`, { headers });
-    if (!response.ok) return reply(response.status === 404 ? 404 : 502);
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      return reply(response.status === 404 || Number(error?.statusCode) === 404 ? 404 : 502);
+    }
     return new Response(response.body, {
       headers: { ...cors, "Content-Type": response.headers.get("Content-Type") || "audio/mp4" },
     });
