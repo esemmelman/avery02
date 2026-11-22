@@ -14,6 +14,7 @@ let busy = false;
 let ready = false;
 let timer;
 let previewUrl;
+let previewBlob;
 
 for (const [id, name, symbol] of vowels) {
   const button = document.createElement("button");
@@ -29,10 +30,17 @@ for (const [id, name, symbol] of vowels) {
   check.setAttribute("aria-hidden", "true");
   button.append(mark, document.createTextNode(name), check);
   button.addEventListener("click", () => {
-    if (selected === id) return;
     selected = id;
     status.textContent = "";
     render();
+    if (player.hidden) return;
+    player.currentTime = 0;
+    const source = player.src;
+    player.play().catch((error) => {
+      if (error.name !== "AbortError" && player.src === source) {
+        status.textContent = "Playback failed. Try tapping the vowel again or use the audio controls.";
+      }
+    });
   });
   nav.append(button);
 }
@@ -56,14 +64,22 @@ function render() {
   save.hidden = !drafts.has(selected) || !!recorder;
   save.disabled = busy;
   if (recorder) return;
-  player.pause();
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
   const draft = drafts.get(selected);
-  previewUrl = draft ? URL.createObjectURL(draft) : undefined;
+  if (draft !== previewBlob) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewBlob = draft;
+    previewUrl = draft ? URL.createObjectURL(draft) : undefined;
+  }
   const source = previewUrl || (saved.has(selected) ? `api/audio/${selected}` : null);
   player.hidden = !source;
-  if (source) player.src = source;
-  else player.removeAttribute("src");
+  if (player.getAttribute("src") === source) return;
+  player.pause();
+  if (source) {
+    player.src = source;
+  } else {
+    player.removeAttribute("src");
+    player.load();
+  }
 }
 
 async function refresh() {
