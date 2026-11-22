@@ -1,0 +1,15 @@
+export const vowels = [
+  ["patah", "Patah", "בַ"],
+  ["qamatz", "Qamatz", "בָ"],
+  ["segol", "Segol", "בֶ"],
+  ["tsere", "Tsere", "בֵ"],
+  ["hiriq", "Hiriq", "בִ"],
+  ["holam", "Holam", "בֹ"],
+  ["qubuts", "Qubuts", "בֻ"],
+  ["shuruk", "Shuruk", "וּ"],
+  ["sheva", "Sheva", "בְ"],
+  ["hataf-segol", "Hataf Segol", "בֱ"],
+  ["hataf-patah", "Hataf Patah", "בֲ"],
+  ["hataf-qamatz", "Hataf Qamatz", "בֳ"],
+  ["qamatz-qatan", "Qamatz Qatan", "בׇ"],
+];
