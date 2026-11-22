@@ -47,10 +47,12 @@ function showPair(index) {
   selectedVowel = undefined;
   status.textContent = "";
   render();
-  playSelected();
 }
 
-pair.addEventListener("click", () => showPair(pairIndex));
+pair.addEventListener("click", () => {
+  showPair(pairIndex);
+  playSelected();
+});
 previous.addEventListener("click", () => showPair(pairIndex - 1));
 next.addEventListener("click", () => showPair(pairIndex + 1));
 

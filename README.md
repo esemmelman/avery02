@@ -1,8 +1,8 @@
 # Hebrew Vowel Recorder
 
-Open the recorder at https://esemmelman.github.io/avery02/. Next moves to the
-next pair and plays its saved sound. Tap the pair to hear it again, or tap a
-vowel in the left panel to hear that vowel on its own. The recording controls
+Open the recorder at https://esemmelman.github.io/avery02/. Previous and Next
+move between pairs. Tap the displayed pair or a vowel in the left panel to
+hear its saved sound. The recording controls
 are currently hidden. Saved sounds are shared across devices.
 
 GitHub Pages serves the recorder directly. The Supabase Edge Function in
