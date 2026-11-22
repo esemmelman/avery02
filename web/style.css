@@ -53,6 +53,9 @@ nav button[aria-pressed="true"] { background: #cce9df; border-color: #477f70; }
 nav [lang="he"] { font: 1.35rem Arial, sans-serif; text-align: center; }
 .heading { font-weight: 650; margin: 15px 0; }
 .card { padding: clamp(18px, 5vw, 48px); text-align: center; }
+#unlock label, #unlock input { display: block; margin: 12px auto; }
+#unlock input { width: min(100%, 340px); min-height: 44px; font: inherit; }
+#lock { margin-top: 12px; }
 .symbol { font: normal clamp(5rem, 13vw, 9rem)/1.25 Arial, sans-serif; color: #155b50; }
 h1 { margin: 0; font-size: clamp(1.5rem, 5vw, 2.25rem); }
 #actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

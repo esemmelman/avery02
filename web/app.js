@@ -6,7 +6,13 @@ const record = byId("record");
 const save = byId("save");
 const player = byId("player");
 const status = byId("status");
+const unlock = byId("unlock");
+const lock = byId("lock");
+const unlockStatus = byId("unlock-status");
+const endpoint = "https://fgomaujsdblpzxhnnqrg.supabase.co/functions/v1/avery02-pages";
 const drafts = new Map();
+let accessCode = sessionStorage.getItem("avery02-access-code") || "";
+let clips = new Map();
 let saved = new Set();
 let selected = vowels[0][0];
 let recorder;
@@ -46,13 +52,17 @@ for (const [id, name, symbol] of vowels) {
 }
 
 function render() {
+  unlock.hidden = ready;
+  lock.hidden = !ready;
+  lock.disabled = busy || !!recorder || drafts.size > 0;
+  byId("recorder-card").hidden = !ready;
   const [, name, symbol] = vowels.find(([id]) => id === selected);
   byId("title").textContent = name;
   byId("symbol").textContent = symbol;
-  byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved` : "Sync unavailable";
+  byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved` : "Recorder locked";
   for (const button of nav.children) {
     const id = button.dataset.vowel;
-    button.disabled = busy || !!recorder;
+    button.disabled = !ready || busy || !!recorder;
     button.setAttribute("aria-pressed", String(id === selected));
     button.lastElementChild.textContent = saved.has(id) ? "✓" : "";
     const [, label] = vowels.find(([vowelId]) => vowelId === id);
@@ -64,13 +74,13 @@ function render() {
   save.hidden = !drafts.has(selected) || !!recorder;
   save.disabled = busy;
   if (recorder) return;
-  const draft = drafts.get(selected);
+  const draft = drafts.get(selected) || clips.get(selected);
   if (draft !== previewBlob) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewBlob = draft;
     previewUrl = draft ? URL.createObjectURL(draft) : undefined;
   }
-  const source = previewUrl || (saved.has(selected) ? `api/audio/${selected}` : null);
+  const source = previewUrl || null;
   player.hidden = !source;
   if (player.getAttribute("src") === source) return;
   player.pause();
@@ -82,10 +92,24 @@ function render() {
   }
 }
 
+function audioRequest(id, options = {}) {
+  const url = new URL(endpoint);
+  if (id) url.searchParams.set("vowel", id);
+  return fetch(url, { ...options, headers: { Authorization: `Bearer ${accessCode}` } });
+}
+
 async function refresh() {
-  const response = await fetch("api/audio");
-  if (!response.ok) throw new Error("Sync failed");
-  saved = new Set(await response.json());
+  const response = await audioRequest();
+  if (response.status === 401 || response.status === 403) throw new Error("Access code rejected.");
+  if (!response.ok) throw new Error("Could not connect. Try again.");
+  const ids = await response.json();
+  const recordings = await Promise.all(ids.map(async (id) => {
+    const audio = await audioRequest(id);
+    if (!audio.ok) throw new Error("Could not load recordings. Try again.");
+    return [id, await audio.blob()];
+  }));
+  clips = new Map(recordings);
+  saved = new Set(ids);
   ready = true;
 }
 
@@ -97,9 +121,10 @@ save.addEventListener("click", async () => {
   render();
   status.textContent = "Saving…";
   try {
-    const response = await fetch(`api/audio/${id}`, { method: "PUT", body: draft });
+    const response = await audioRequest(id, { method: "PUT", body: draft });
     if (!response.ok) throw new Error("Upload failed");
     drafts.delete(id);
+    clips.set(id, draft);
     saved.add(id);
     ready = true;
     status.textContent = "Saved. Available on your other devices.";
@@ -169,20 +194,49 @@ window.addEventListener("beforeunload", (event) => {
   event.preventDefault();
   event.returnValue = true;
 });
-document.addEventListener("visibilitychange", async () => {
-  if (document.hidden || busy || recorder) return;
+async function connect() {
+  busy = true;
+  unlock.querySelector("button").disabled = true;
+  unlockStatus.textContent = "Unlocking…";
+  render();
   try {
     await refresh();
-    if (!busy && !recorder) render();
-  } catch { /* Keep the last known saved list. */ }
-});
-busy = true;
-render();
-try {
-  await refresh();
-} catch {
-  status.textContent = "Could not load synced recordings. Reload to try again.";
-} finally {
-  busy = false;
-  render();
+    sessionStorage.setItem("avery02-access-code", accessCode);
+    byId("access-code").value = "";
+    unlockStatus.textContent = "";
+  } catch (error) {
+    unlockStatus.textContent = error.message;
+  } finally {
+    busy = false;
+    unlock.querySelector("button").disabled = false;
+    render();
+  }
 }
+
+unlock.addEventListener("submit", (event) => {
+  event.preventDefault();
+  accessCode = byId("access-code").value.trim();
+  void connect();
+});
+lock.addEventListener("click", () => {
+  accessCode = "";
+  sessionStorage.removeItem("avery02-access-code");
+  clips.clear();
+  saved.clear();
+  ready = false;
+  render();
+  byId("access-code").focus();
+});
+document.addEventListener("visibilitychange", async () => {
+  if (document.hidden || !ready || busy || recorder) return;
+  busy = true;
+  try {
+    await refresh();
+  } catch { /* Preserve the available clips until the next sync. */ }
+  finally {
+    busy = false;
+    render();
+  }
+});
+render();
+if (accessCode) void connect();
