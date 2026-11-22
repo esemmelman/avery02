@@ -41,16 +41,6 @@ aside {
   font: clamp(2.2rem, 4vw, 3.2rem)/1.05 var(--hebrew-font);
   cursor: pointer;
 }
-#vowels label[data-saved]::after {
-  content: "";
-  position: absolute;
-  top: .45rem;
-  right: .35rem;
-  width: .35rem;
-  height: .35rem;
-  border-radius: 50%;
-  background: #155b50;
-}
 #vowels input:checked + label { color: #10594e; }
 #vowels input:focus-visible + label { outline: 3px solid #bf580a; border-radius: 5px; }
 #vowels input:disabled + label { opacity: .57; cursor: default; }
@@ -74,9 +64,10 @@ h1 { margin: 4px 0 12px; font-size: clamp(1.35rem, 3vw, 1.9rem); }
   color: #112c30;
   font: clamp(5rem, min(21vw, 26svh), 13rem)/1.2 var(--hebrew-font);
   white-space: nowrap;
+  word-spacing: -.1em;
 }
 #pair:disabled { opacity: 1; }
-.pair-navigation { display: flex; gap: 10px; justify-content: center; }
+.pair-navigation { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
 .pair-navigation button { padding: 8px 18px; border: 1px solid #cbdcd7; border-radius: 10px; }
 #next { background: #10594e; color: white; border-color: #10594e; }
 .recorder { margin-top: 14px; padding: 12px; text-align: center; }
@@ -85,7 +76,8 @@ h1 { margin: 4px 0 12px; font-size: clamp(1.35rem, 3vw, 1.9rem); }
 #actions button { background: #10594e; color: white; border: 0; border-radius: 10px; padding: 10px 18px; font-weight: 650; }
 #actions [data-recording] { background: #9d302d; }
 audio { display: block; margin: 18px auto 0; width: min(100%, 320px); }
-#status { min-height: 1.25em; margin-bottom: 0; }
+#status { margin-bottom: 0; }
+#status:empty { margin: 0; }
 @media (max-width: 620px) {
   main { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 14px; }
   aside { max-height: 38dvh; }

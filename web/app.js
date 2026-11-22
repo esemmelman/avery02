@@ -32,12 +32,12 @@ function selectedClip() {
 }
 
 function playSelected() {
-  if (player.hidden) return;
+  if (!previewUrl) return;
   player.currentTime = 0;
   const source = player.src;
   player.play().catch((error) => {
     if (error.name !== "AbortError" && player.src === source) {
-      status.textContent = "Playback failed. Tap the pair or vowel again, or use the audio controls.";
+      status.textContent = "Playback failed. Tap the pair or vowel again.";
     }
   });
 }
@@ -47,8 +47,7 @@ function showPair(index) {
   selectedVowel = undefined;
   status.textContent = "";
   render();
-  if (player.hidden) status.textContent = "Record this pair to add its sound.";
-  else playSelected();
+  playSelected();
 }
 
 pair.addEventListener("click", () => showPair(pairIndex));
@@ -72,7 +71,7 @@ for (const [id, symbol] of vowels) {
     render();
     playSelected();
   });
-  vowelOptions.set(id, { input, label });
+  vowelOptions.set(id, input);
   nav.append(input, label);
 }
 
@@ -86,10 +85,9 @@ function render() {
   pair.disabled = busy || !!recorder;
   previous.disabled = pair.disabled || pairIndex === 0;
   next.disabled = pair.disabled || pairIndex === pairs.length - 1;
-  for (const [id, { input, label }] of vowelOptions) {
+  for (const [id, input] of vowelOptions) {
     input.disabled = busy || !!recorder;
     input.checked = id === selectedVowel;
-    label.toggleAttribute("data-saved", clips.has(id));
   }
   record.disabled = busy;
   record.hidden = !!recorder && !!selectedVowel;
@@ -109,7 +107,6 @@ function render() {
     previewUrl = draft ? URL.createObjectURL(draft) : undefined;
   }
   const source = previewUrl || null;
-  player.hidden = !source;
   if (player.getAttribute("src") === source) return;
   player.pause();
   if (source) {
@@ -203,7 +200,6 @@ async function toggleRecording(forVowel) {
     }, { once: true });
     recorder.start();
     player.pause();
-    player.hidden = true;
     timer = setTimeout(() => {
       if (recorder?.state === "recording") recorder.stop();
     }, 30_000);
