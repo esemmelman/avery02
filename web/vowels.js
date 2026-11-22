@@ -13,10 +13,3 @@ export const vowels = [
   ["hataf-qamatz", "אֳ"],
   ["qamatz-qatan", "אׇ"],
 ];
-
-const practiceLetters = ["מ", "נ", "ל", "ר", "שׁ"];
-const practiceVowels = ["ַ", "ֶ", "ִ", "ֹ", "ֻ"];
-
-export const practicePairs = practiceLetters.flatMap((letter) =>
-  practiceVowels.map((mark) => (letter + mark).normalize("NFC"))
-);

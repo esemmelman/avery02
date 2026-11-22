@@ -1,4 +1,4 @@
-import { practicePairs, vowels } from "./vowels.js?v=4";
+import { vowels } from "./vowels.js?v=5";
 
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has("from-retired")) {
@@ -23,12 +23,6 @@ let ready = false;
 let timer;
 let previewUrl;
 let previewBlob;
-
-for (const pair of practicePairs) {
-  const item = document.createElement("li");
-  item.textContent = pair;
-  byId("practice").append(item);
-}
 
 const vowelOptions = new Map();
 for (const [id, symbol] of vowels) {
