@@ -4,29 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hebrew Vowel Recorder</title>
-<link rel="stylesheet" href="web/style.css">
-<script type="module" src="web/app.js?v=3"></script>
+<link rel="stylesheet" href="web/style.css?v=4">
+<script type="module" src="web/app.js?v=4"></script>
 </head>
 <body>
 <main>
   <aside aria-label="Hebrew vowels">
-    <h2>Vowels <span lang="he" dir="rtl">נִקּוּד</span></h2>
-    <nav id="vowels" aria-label="Choose a vowel"></nav>
+    <h2 lang="he" dir="rtl">נִקּוּד</h2>
+    <div id="vowels" role="radiogroup" aria-label="Choose a vowel"></div>
     <p id="progress">Loading recordings…</p>
   </aside>
-  <section aria-labelledby="title">
-    <p class="heading">Hebrew vowel recorder</p>
-    <div class="card">
-      <div id="symbol" class="symbol" lang="he" dir="rtl"></div>
-      <h1 id="title"></h1>
-      <p id="instruction">Tap a vowel to play its recording or record a new sound.</p>
+  <section class="lesson" aria-labelledby="practice-title">
+    <h1 id="practice-title">Letter and vowel practice</h1>
+    <ul id="practice" class="card" lang="he" dir="rtl"></ul>
+    <section class="card recorder" aria-label="Vowel recorder">
       <div id="actions">
+        <span id="symbol" class="symbol" lang="he" dir="rtl"></span>
         <button id="record" disabled>Record sound</button>
         <button id="save" hidden>Save recording</button>
       </div>
       <audio id="player" controls hidden></audio>
       <p id="status" role="status" aria-live="polite"></p>
-    </div>
+    </section>
   </section>
 </main>
 </body>

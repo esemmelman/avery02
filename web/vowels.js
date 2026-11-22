@@ -1,15 +1,22 @@
 export const vowels = [
-  ["patah", "Patah", "בַ"],
-  ["qamatz", "Qamatz", "בָ"],
-  ["segol", "Segol", "בֶ"],
-  ["tsere", "Tsere", "בֵ"],
-  ["hiriq", "Hiriq", "בִ"],
-  ["holam", "Holam", "בֹ"],
-  ["qubuts", "Qubuts", "בֻ"],
-  ["shuruk", "Shuruk", "וּ"],
-  ["sheva", "Sheva", "בְ"],
-  ["hataf-segol", "Hataf Segol", "בֱ"],
-  ["hataf-patah", "Hataf Patah", "בֲ"],
-  ["hataf-qamatz", "Hataf Qamatz", "בֳ"],
-  ["qamatz-qatan", "Qamatz Qatan", "בׇ"],
+  ["patah", "אַ"],
+  ["qamatz", "אָ"],
+  ["segol", "אֶ"],
+  ["tsere", "אֵ"],
+  ["hiriq", "אִ"],
+  ["holam", "אֹ"],
+  ["qubuts", "אֻ"],
+  ["shuruk", "אוּ"],
+  ["sheva", "אְ"],
+  ["hataf-segol", "אֱ"],
+  ["hataf-patah", "אֲ"],
+  ["hataf-qamatz", "אֳ"],
+  ["qamatz-qatan", "אׇ"],
 ];
+
+const practiceLetters = ["מ", "נ", "ל", "ר", "שׁ"];
+const practiceVowels = ["ַ", "ֶ", "ִ", "ֹ", "ֻ"];
+
+export const practicePairs = practiceLetters.flatMap((letter) =>
+  practiceVowels.map((mark) => (letter + mark).normalize("NFC"))
+);

@@ -1,4 +1,4 @@
-import { vowels } from "./vowels.js";
+import { practicePairs, vowels } from "./vowels.js?v=4";
 
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has("from-retired")) {
@@ -24,20 +24,24 @@ let timer;
 let previewUrl;
 let previewBlob;
 
-for (const [id, name, symbol] of vowels) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.dataset.vowel = id;
-  const mark = document.createElement("span");
-  mark.lang = "he";
-  mark.dir = "rtl";
-  mark.setAttribute("aria-hidden", "true");
-  mark.textContent = symbol;
-  const check = document.createElement("span");
-  check.className = "check";
-  check.setAttribute("aria-hidden", "true");
-  button.append(mark, document.createTextNode(name), check);
-  button.addEventListener("click", () => {
+for (const pair of practicePairs) {
+  const item = document.createElement("li");
+  item.textContent = pair;
+  byId("practice").append(item);
+}
+
+const vowelOptions = new Map();
+for (const [id, symbol] of vowels) {
+  const input = document.createElement("input");
+  input.type = "radio";
+  input.name = "vowel";
+  input.id = `vowel-${id}`;
+  const label = document.createElement("label");
+  label.htmlFor = input.id;
+  label.lang = "he";
+  label.dir = "rtl";
+  label.textContent = symbol;
+  input.addEventListener("click", () => {
     selected = id;
     status.textContent = "";
     render();
@@ -50,22 +54,19 @@ for (const [id, name, symbol] of vowels) {
       }
     });
   });
-  nav.append(button);
+  vowelOptions.set(id, { input, label });
+  nav.append(input, label);
 }
 
 function render() {
-  const [, name, symbol] = vowels.find(([id]) => id === selected);
-  byId("title").textContent = name;
+  const [, symbol] = vowels.find(([id]) => id === selected);
   byId("symbol").textContent = symbol;
   byId("progress").textContent = ready ? `${saved.size} of ${vowels.length} saved`
     : busy ? "Loading recordings…" : "Sync unavailable";
-  for (const button of nav.children) {
-    const id = button.dataset.vowel;
-    button.disabled = busy || !!recorder;
-    button.setAttribute("aria-pressed", String(id === selected));
-    button.lastElementChild.textContent = saved.has(id) ? "✓" : "";
-    const [, label] = vowels.find(([vowelId]) => vowelId === id);
-    button.setAttribute("aria-label", saved.has(id) ? `${label}, recording saved` : label);
+  for (const [id, { input, label }] of vowelOptions) {
+    input.disabled = busy || !!recorder;
+    input.checked = id === selected;
+    label.toggleAttribute("data-saved", saved.has(id));
   }
   record.disabled = busy;
   record.toggleAttribute("data-recording", !!recorder);
