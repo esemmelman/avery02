@@ -17,7 +17,7 @@ main {
   gap: clamp(18px, 5vw, 64px);
   padding: var(--edge) max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
 }
-aside, .card, .lesson::before {
+aside, .card {
   background: #fff;
   border: 1px solid #cbdcd7;
   border-radius: 21px;
@@ -48,27 +48,13 @@ button { font: inherit; min-height: 44px; cursor: pointer; }
 button:focus-visible { outline: 3px solid #bf580a; outline-offset: 2px; }
 button:disabled { opacity: .57; cursor: wait; }
 .lesson {
-  display: grid;
-  grid-template-rows: 1fr auto 1fr;
-  align-self: stretch;
-  isolation: isolate;
   width: min(100%, 720px);
   margin-inline: auto;
 }
-.lesson::before {
-  content: "";
-  grid-area: 1 / 1 / 3 / 2;
-  z-index: -1;
-}
 .practice {
-  grid-area: 2 / 1;
-  /* Reserve the former heading's height to keep the navigation in place. */
-  padding: calc(17px + 1lh + clamp(12px, 2vw, 22px)) calc(1px + clamp(12px, 2vw, 22px))
-    calc(1px + clamp(12px, 2vw, 22px));
-  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  padding: clamp(12px, 2vw, 22px);
   text-align: center;
 }
-.practice > * { font-size: 1rem; }
 #pair-position { margin: 0; }
 #pair {
   display: block;
@@ -83,7 +69,15 @@ button:disabled { opacity: .57; cursor: wait; }
   word-spacing: -.1em;
 }
 #pair:disabled { opacity: 1; }
-.pair-navigation { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+.pair-navigation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+#start-over { justify-self: start; }
+.pair-step { display: flex; gap: 10px; }
 .pair-navigation button { padding: 8px 18px; border: 1px solid #cbdcd7; border-radius: 10px; }
 #next { background: #10594e; color: white; border-color: #10594e; }
 .recorder { margin-top: 14px; padding: 12px; text-align: center; }
@@ -94,9 +88,13 @@ button:disabled { opacity: .57; cursor: wait; }
 audio { display: block; margin: 18px auto 0; width: min(100%, 320px); }
 #status { margin-bottom: 0; }
 #status:empty { margin: 0; }
+@media (max-width: 720px) {
+  .pair-navigation { grid-template-columns: auto 1fr; gap: 8px; }
+  .pair-step { justify-self: end; gap: 6px; }
+  .pair-navigation button { padding-inline: 9px; }
+}
 @media (max-width: 620px) {
   main { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 14px; }
   aside { max-height: 38dvh; }
-  .lesson { grid-template-rows: 0 auto; }
   #vowels { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }

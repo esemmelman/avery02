@@ -9,6 +9,7 @@ if (pageUrl.searchParams.has("from-retired")) {
 const byId = (id) => document.getElementById(id);
 const nav = byId("vowels");
 const pair = byId("pair");
+const startOver = byId("start-over");
 const previous = byId("previous");
 const next = byId("next");
 const record = byId("record");
@@ -55,6 +56,7 @@ pair.addEventListener("click", () => {
 });
 previous.addEventListener("click", () => showPair(pairIndex - 1));
 next.addEventListener("click", () => showPair(pairIndex + 1));
+startOver.addEventListener("click", () => showPair(0));
 
 const vowelOptions = new Map();
 for (const [id, symbol] of vowels) {
@@ -85,6 +87,7 @@ function render() {
   pair.textContent = pairs[pairIndex];
   byId("pair-position").textContent = `Pair ${pairIndex + 1} of ${pairs.length}`;
   pair.disabled = busy || !!recorder;
+  startOver.disabled = pair.disabled;
   previous.disabled = pair.disabled || pairIndex === 0;
   next.disabled = pair.disabled || pairIndex === pairs.length - 1;
   for (const [id, input] of vowelOptions) {
